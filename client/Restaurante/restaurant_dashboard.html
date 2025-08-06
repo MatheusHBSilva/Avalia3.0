@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard do Restaurante</title>
+  <link rel="icon" type="image/x-icon" href="/images/icon.png">
+  <link rel="stylesheet" href="/CSS/restaurant_dashboard.css">
+  <script src="/auth.js" defer></script>
+  <script src="restaurant_dashboard.js" defer></script>
+</head>
+<body>
+  <div class="screen">
+    <button class="back-button" onclick="logout()">Voltar</button>
+    <img class="logo" src="/images/logo.png" alt="logo"/>
+    <div class="container">
+      <div class="restaurant-card">
+        <div class="header-section">
+          <div class="restaurant-icon">🍽️</div>
+          <h2 id="restaurantName">Carregando...</h2>
+        </div>
+
+        <div class="details-section"> <p>Nota Média: <span id="averageRating">Carregando...</span></p><br>
+          <div class="stars_p" id="ratingStars"></div>
+          <div class="aval"> <p>Avaliações: <span id="reviewCount">Carregando...</span></p></div>
+          <div class="phone"><p>Telefone: <span id="telefone">Carregando...</span></p></div>
+          <div class="email"><p>Email: <span id="email">Carregando...</span></p></div>
+        </div>
+      </div>
+      <div class="info">
+        <div class="tags" id="restaurantTags"></div>
+        <div class="buttons">
+          <button id="generateAnalysisBtn" onclick="generateBusinessAnalysis()">Gerar relatórios de feedback</button>
+          <div id="message" class="message"></div>
+          <button id="historyBtn">Histórico de relatórios</button>
+          <!-- Essa parte abaixo é o botão de editar o perfil do restaurante que não está implementado (dívida técnica) -->
+          <!--<button id="editProfileBtn">Editar perfil do restaurante</button>-->
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,129 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%; 
+    font-family: Arial, sans-serif; 
+    line-height: 1.6; 
+    background-image: url('/images/fundo.jpg');
+    background-size: cover;
+    background-repeat: no-repeat; 
+    background-position: center center; 
+    background-attachment: fixed; 
+}
+
+.screen {
+    height: 100vh; 
+    min-height: 500px;
+    position: relative; 
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; 
+    text-align: left; 
+    color: white; 
+    box-sizing: border-box;
+    padding-left: 80px; 
+    padding-top: 8%;
+}
+
+.logo {
+    position: relative; 
+    margin-bottom: -3%;
+}
+
+.logo img {
+    height: auto; 
+    width: 170%;
+    max-width: 100vw;
+}
+
+.screen h1 {
+    font-size: 3em;
+    line-height: 1.2;
+    max-width: 700px;
+    margin-right: auto; 
+
+}
+.slogan h1{
+    margin-bottom: -1%;
+}
+
+.men {
+    position: absolute;
+    top:center;
+    left:45%;
+}
+
+.men img {
+    height: auto; 
+    width: 90%;
+}
+
+.slogan {
+    font-size: 100%;
+}
+
+.profile{
+    font-size: 135%;
+}
+
+.bottons{
+    display: flex;
+    gap: 1rem; 
+    max-width: 450px;
+    margin-left: 0;   
+    margin-right: auto; 
+    justify-content: flex-start; }
+
+button {
+  padding: 1rem 2rem;
+  font-size: 1.5rem;
+  color: white;
+  background-color: #7c8046;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #4a5f50;
+}
+
+@media (max-width: 1310px){
+    .men {
+        display: none;
+    }
+}    
+
+@media (max-width: 600px) {
+    .screen h1 {
+        font-size: 2.2em; 
+        max-width: 95%; 
+        padding-top: 20px; 
+    }
+
+    .profile {
+        font-size: 1.35em;
+        max-width: 95%;
+        margin-bottom: 30px;
+    }
+
+    .bottons {
+        flex-direction: column; 
+        gap: 15px; 
+        width: 100%; 
+        max-width: 300px; 
+        margin-left: 0;
+        margin-right: auto;
+    }
+
+    .logo {
+        max-width: 35vw;
+        height: auto; 
+    }
+
+    .screen {
+        padding-left: 20px; 
+        padding-right: 20px; 
+    }
+}

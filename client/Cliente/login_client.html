@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Cliente - AvalIA</title>
+  <link rel="icon" type="image/x-icon" href="/images/icon.png">
+  <link rel="stylesheet" href="/CSS/styles.css">
+  <link rel="stylesheet" href="/CSS/login_client.css">
+  <script src="/auth.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <div class="login-container">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <h1>Login - Cliente </h1>
+      <h2 class="welcome">Bem-vindo de volta </h2>
+      <h3 class="sentence">Sentimos sua falta! Pronto para mais uma refeição?<br>
+        Descubra sabores e transforme experiências.</h3>
+      <div class="form-group">
+        <label for="email">Seu email:</label>
+        <input type="email" id="email" placeholder="Digite seu email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Sua senha:</label>
+        <input type="password" id="password" placeholder="Digite sua senha" required>
+      </div>
+      <button onclick="login('client')">Entrar</button>
+      <p id="message" class="message"></p>
+      <div class="links">
+        <span>Ainda não tenho cadastro</span> | 
+        <a href="/Cliente/register_client.html">Registre-se</a> <br>
+        <a href="/Restaurante/login_restaurant.html">Mudar para login Restaurante</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

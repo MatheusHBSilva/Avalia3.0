@@ -1,0 +1,138 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%; 
+    font-family: Arial, sans-serif; 
+    line-height: 1.6; 
+    background-image: url('/images/fundo_login.jpg');
+    background-size: cover;
+    background-repeat:repeat; 
+    background-position: center center; 
+    background-attachment: fixed;
+}
+
+.container{
+    position: relative; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end; 
+    text-align: left; 
+    color: #7c8046;; 
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+.register-container {
+  background-color: #f9fadc;
+  padding:2rem;
+  padding-bottom: 1rem;
+  padding-top: 2rem;
+  border-radius: 10px;
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+  margin-right: 20%;
+
+}
+
+.register-container h1 {
+  font-size: 1em;
+}
+
+.logo {
+  margin-bottom: -8%;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  text-align: left;
+  margin-left: 1%;
+}
+
+.form-group label {
+  display: block;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #e0e0e0;
+}
+
+button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #7c8046;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #4a5f50;
+}
+
+.back-button {
+  background-color: #7c8046;
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+.back-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #5b7461;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+
+.back-link:hover {
+  background-color: #4a5f50;
+}
+
+.dual-input {
+  display: flex;
+  gap: 1rem;
+}
+
+.dual-input .form-group {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+    .container {
+        align-items: center;
+        min-height: auto; 
+        justify-content: flex-start; 
+        padding-top: 60px; 
+        padding-bottom: 20px;
+    }
+    .register-container {
+        margin-left: 0;
+        margin-right: 0;
+        max-width: 85%;
+        padding: 1.5rem;
+        padding-bottom: 3rem;
+        padding-top: 2.5rem;
+    }
+}

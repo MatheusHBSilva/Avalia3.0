@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avaliar Restaurante</title>
+  <link rel="icon" type="image/x-icon" href="/images/icon.png">
+  <link rel="stylesheet" href="/CSS/rate.css">
+  <script src="rate.js"></script>
+</head>
+<body>
+  <div class="screen">
+    <button class="back-button" onclick="goBack()">Voltar</button>
+    <img class="logo" src="/images/logo.png" alt="logo"/>
+    <div class="container"> 
+      <h1>Avaliar Restaurante</h1>
+      <div class="restaurant-info">
+        <h2 id="restaurant-name">Nome do Restaurante</h2>
+      </div>
+    <div class="rating-section">
+      <label for="rating">Nota:</label>
+      <div class="stars" id="star-rating">
+        <span data-value="1">☆</span>
+        <span data-value="2">☆</span>
+        <span data-value="3">☆</span>
+        <span data-value="4">☆</span>
+        <span data-value="5">☆</span>
+      </div>
+      <input type="hidden" id="rating-value" name="rating" value="1">
+      </div>
+      <textarea id="review-text" placeholder="Escreva sua avaliação aqui..." rows="4"></textarea>
+      <button id="save-review-btn" class="submit-button">Salvar Avaliação</button>
+    </div>
+    </div>
+  </div>
+</body>
+</html>

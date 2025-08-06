@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro Restaurante - AvalIA</title>
+  <link rel="icon" type="image/x-icon" href="/images/icon.png">
+  <link rel="stylesheet" href="/CSS/register_restaurant.css">
+   <script src="/Restaurante/restaurant_register.js"></script>
+</head>
+<body>
+  
+  <div class="container">
+    <button class="back-button" onclick="window.location.href='/Restaurante/login_restaurant.html'">Voltar</button>
+    <div class="register-container">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <h1>Crie seu cadastro - Restaurante</h1>
+      <div class="form-group">
+        <label for="restaurantName">Nome do restaurante:</label>
+        <input type="text" id="restaurantName" placeholder="Digite o nome do restaurante" required>
+      </div>
+      <div class="form-group">
+        <label for="cnpj">CNPJ:</label>
+        <input type="text" id="cnpj" placeholder="Digite o CNPJ do restaurante" required>
+      </div>
+      <div class="form-group">
+        <label for="endereco">Endereço:</label>
+        <input type="text" id="endereco" placeholder="Digite o endereço do restaurante" required>
+      </div>
+      <div class="form-group">
+        <label for="telefone">Telefone:</label>
+        <input type="text" id="telefone" placeholder="Digite o telefone para contato do restaurante" required>
+      </div>
+      <div class="form-group">
+        <label for="email">E-mail:</label>
+        <input type="email" id="email" placeholder="Digite o email do restaurante" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Senha:</label>
+        <input type="password" id="password" placeholder="Digite a senha" required>
+      </div>
+      <div class="form-group">
+        <label for="tags">Tags (separadas por vírgula):</label>
+        <input type="text" id="tags" placeholder="Ex: comida, bebida, serviço">
+      </div>
+      <button onclick="register()">Cadastre-se</button>
+      <p id="message" class="message"></p>
+    </div>
+  </div>
+</body>
+</html>

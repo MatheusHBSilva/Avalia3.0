@@ -1,0 +1,92 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%; 
+    font-family: Arial, sans-serif; 
+    line-height: 1.6; 
+    background-image: url('/images/fundo_restaurante.jpg');
+    background-size: cover;
+    background-repeat: no-repeat; 
+    background-position: center center; 
+    background-attachment: fixed;  
+}
+
+.screen{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin: 0px;
+}
+
+button {
+    width: 60%;
+    align-items: center; 
+    justify-content: center;
+    padding: 0.75rem;
+    background-color: #7c8046;
+    border-radius: 5px;
+    color: white;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    transition: background-color 0.2s;
+    box-sizing: border-box;
+    white-space: nowrap;
+    outline: none;
+    border: none;
+}
+
+button:hover {
+    background-color: #4a5f50;
+}
+
+.back-button {
+    background-color: #7c8046;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 5;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    width: auto;
+    height: auto;
+    display: flex;
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    outline: none;
+    border: none;
+}
+
+.logo{
+    width: 20%;
+}
+
+.container {
+    color: white;
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+    flex-direction: column;
+    text-align: center;
+    width: 60%;
+    font-size: 1rem;
+    margin-bottom: 5%;
+}
+
+.header-section {
+    width: 100%;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 2em;
+    color: #7c8046;
+}
+
+.name{
+    font-size: 200%;
+    font-weight: bold;
+}
+
+.tags{
+    display: none;
+}

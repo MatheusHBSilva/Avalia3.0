@@ -1,0 +1,213 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%; 
+    font-family: Arial, sans-serif; 
+    line-height: 1.6; 
+    background-image: url('/images/fundo_restaurante.jpg');
+    background-size: cover;
+    background-repeat: no-repeat; 
+    background-position: center center; 
+    background-attachment: fixed;  
+}
+
+.screen{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin: 0px;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 20px; 
+    gap: 30px;
+    flex-wrap: wrap;
+    min-height: 500px;
+    width: auto;  
+}
+
+.restaurant-card {
+    left:60%;
+    background-color: #f9fadc;
+    border-radius: 10px;
+    align-items: center;
+    display: flex;
+    box-sizing: border-box;
+    flex-direction: column;
+    padding: 30px;
+    width: 45%;
+    height: auto;
+    gap: 5px;
+    max-width: 500px;
+    min-width: 320px;
+    flex-shrink: 1; 
+    flex-grow: 1; 
+    border: 2px solid #7c8046;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    text-align: center; 
+    justify-content: center;
+    color: black; 
+    box-sizing: border-box;
+    width: 45%;
+    height: auto;
+    max-width: 500px; 
+    min-width: 300px;
+    min-height: 300px;
+}
+
+.header-section {
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    width: 100%;
+    font-size: 1.5rem;
+    margin-bottom: 10%;
+}
+
+.details-section {
+    width: 100%; 
+    margin: 0 auto; 
+    text-align: center;
+    font-size: 1.5rem;
+    line-height: 0.5; 
+}
+
+.aval{
+  flex-wrap: nowrap;
+}
+
+.stars_p{
+    margin: 0 auto; 
+}
+
+.restaurant-icon {
+  font-size: 5rem;
+}
+
+.tags {
+    align-items: center; 
+    justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    width: 100%; 
+}
+    
+.tags span {
+  background-color: #e9c46a;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  color: #8a4f2a;
+  font-size: 1.1rem;
+}
+
+button {
+    align-items: center; 
+    justify-content: center;
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #7c8046;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    transition: background-color 0.2s;
+    box-sizing: border-box;
+    outline: none;
+}
+
+button:hover {
+  background-color: #4a5f50;
+}
+
+.back-button {
+  background-color: #7c8046;
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 5;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+.message {
+  margin-top: 1rem;
+  color: #dc3545;
+  display: none;
+}
+
+.message.error {
+  color: #dc3545;
+}
+
+.message.success {
+  color: #28a745;
+}
+
+.stars {
+  color: #ffc107;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.star {
+  cursor: pointer;
+}
+
+.star.selected {
+  color: #ffca28;
+}
+
+.analysis-report {
+  margin-top: 2rem;
+  text-align: center;
+  background-color: #f9fadc;
+  padding: 1rem;
+  border-radius: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+  width: 60%; 
+  border: 2px solid #767847;
+}
+
+.analysis-report pre {
+  white-space: pre-wrap;
+  font-family: Arial, sans-serif;
+}
+
+.pdf-button {
+    align-items: center; 
+    justify-content: center;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #7c8046;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+    width: 50%;
+}
+
+.pdf-button:hover {
+  background-color: #4a5f50;
+}

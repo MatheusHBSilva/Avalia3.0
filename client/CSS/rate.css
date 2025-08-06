@@ -1,0 +1,116 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%; 
+    font-family: Arial, sans-serif; 
+    line-height: 1.6; 
+    background-image: url('/images/fundo_login.jpg');
+    background-size: cover;
+    background-repeat: no-repeat; 
+    background-position: center center; 
+    background-attachment: fixed;  
+}
+
+.screen{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin: 0px;
+    padding-bottom: 2rem;
+}
+
+.container {
+  background-color: #f9fadc;
+  border-radius: 10px;
+  border: 2px solid #7c8046;
+  padding: 1rem;
+  width: 40%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  min-width: 400px;
+}
+
+.back-button {
+  background-color: #7c8046;
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+.restaurant-card {
+  background-color: #f4a261;
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.rating-section {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.rating-section label {
+  color: #5b7461;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stars {
+  font-size: 1.5rem;
+  color: #888;
+  cursor: pointer;
+}
+
+.stars span {
+  margin-right: 0.2rem;
+}
+
+.stars span:hover,
+.stars span.active {
+  color: #f28c38;
+}
+
+textarea {
+  width: 90%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  resize: vertical;
+  min-height: 200px;
+}
+
+.submit-button {
+  align-items: center; 
+  justify-content: center;
+  width: 40%;
+  padding: 0.75rem;
+  background-color: #7c8046;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  transition: background-color 0.2s;
+  box-sizing: border-box;
+  outline: none;
+  flex-wrap: nowrap;
+}
