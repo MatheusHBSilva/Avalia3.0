@@ -1,5 +1,7 @@
 function goBack() {
-  window.location.href='/Cliente/client_dashboard.html'
+  const urlParams = new URLSearchParams(window.location.search);
+  const restaurantId = urlParams.get('id');
+  window.location.href = `/Cliente/review.html?id=${restaurantId}`
 }
 
 async function loadRestaurantDetails() {

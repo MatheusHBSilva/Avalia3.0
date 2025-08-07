@@ -91,6 +91,8 @@ body {
   cursor: pointer;
   transition: background-color 0.3s ease;
   margin-bottom: 0.5rem;
+  width: 100%;
+  text-align: center;
 }
 
 .dropdown button:last-child {

@@ -1,0 +1,125 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%; 
+    font-family: Arial, sans-serif; 
+    line-height: 1.6; 
+    background-image: url('/images/fundo_login.jpg');
+    background-size: cover;
+    background-repeat: no-repeat; 
+    background-position: center center; 
+    background-attachment: fixed;  
+}
+
+.screen{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin: 0px;
+    padding-bottom: 2rem;
+}
+
+.container {
+  background-color: #f9fadc;
+  border-radius: 10px;
+  border: 2px solid #7c8046;
+  padding: 1rem;
+  width: 35%;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  flex-wrap: nowrap;
+  min-width: 400px;
+}
+
+
+.back-button {
+  background-color: #7c8046;
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+.restaurant-card {
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.restaurant-info{
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.restaurant-info h2 {
+  color: black;
+  align-self: center;
+  font-size:xx-large;
+}
+
+.restaurant-classification {
+  color: black;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+#restaurant-name {
+  margin-bottom: 0.2rem;
+}
+
+#restaurant-rating {
+  margin-top: 0;
+}
+
+.comment-container {
+  width: 100%;   
+  align-items: flex-start !important; 
+  text-align: left; 
+  display: flex;
+  flex-direction: column;
+  margin-top: 2rem;
+}
+
+.comment-text {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.name {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.comment {
+  margin-bottom: 1.5rem; 
+}
+
+.no-results {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #7c8046;
+  padding: 2rem;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin: 1rem 0;
+}

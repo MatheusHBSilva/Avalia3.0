@@ -11,7 +11,8 @@
 </head>
 <body>
   <div class="screen">
-    <button class="back-button" onclick="logout()">Voltar</button>
+    <button class="back-button" id="logoutBtn">Logout</button>
+
     <img class="logo" src="/images/logo.png" alt="logo"/>
     <div class="container">
       <div class="restaurant-card">
@@ -19,22 +20,24 @@
           <div class="restaurant-icon">🍽️</div>
           <h2 id="restaurantName">Carregando...</h2>
         </div>
-
-        <div class="details-section"> <p>Nota Média: <span id="averageRating">Carregando...</span></p><br>
+        <div class="details-section">
+          <p>Nota Média: <span id="averageRating">Carregando...</span></p><br>
           <div class="stars_p" id="ratingStars"></div>
           <div class="aval"> <p>Avaliações: <span id="reviewCount">Carregando...</span></p></div>
           <div class="phone"><p>Telefone: <span id="telefone">Carregando...</span></p></div>
           <div class="email"><p>Email: <span id="email">Carregando...</span></p></div>
         </div>
       </div>
+
       <div class="info">
         <div class="tags" id="restaurantTags"></div>
+        
         <div class="buttons">
-          <button id="generateAnalysisBtn" onclick="generateBusinessAnalysis()">Gerar relatórios de feedback</button>
+          <button id="generateAnalysisBtn">Gerar relatórios de feedback</button>
           <div id="message" class="message"></div>
           <button id="historyBtn">Histórico de relatórios</button>
-          <!-- Essa parte abaixo é o botão de editar o perfil do restaurante que não está implementado (dívida técnica) -->
-          <!--<button id="editProfileBtn">Editar perfil do restaurante</button>-->
+          <button id="evaluationsBtn">Visualizar Avaliações</button>
+          <button id="editTagsBtn">Editar Tags</button>
         </div>
       </div>
     </div>

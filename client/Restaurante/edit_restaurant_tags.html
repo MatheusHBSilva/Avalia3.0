@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Tags - Restaurante</title>
+    <link rel="icon" type="image/x-icon" href="/images/icon.png">
+    <link rel="stylesheet" href="/CSS/edit_restaurant_tags.css">
+    <script src="/Restaurante/edit_restaurant_tags.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <button class="back-button" style="font-size: 18px; padding: 12px 24px; border-radius: 8px;" onclick="window.location.href='/Restaurante/restaurant_dashboard.html'">Voltar</button>
+        <div class="edit-tags-container">
+            <h1 style="text-align: center;">Editar Suas Tags</h1>
+            <p style="text-align: center;">Separe as tags por vírgula (ex: comida, bebida, serviço).</p>
+            <div class="form-group">
+                <label for="current-tags">Suas Tags Atuais:</label>
+                <input type="text" id="current-tags" disabled>
+            </div>
+            <div class="form-group">
+                <label for="new-tags">Novas Tags:</label>
+                <input type="text" id="new-tags" placeholder="Adicione ou remova tags aqui" required>
+            </div>
+            <button onclick="saveTags()">Salvar Tags</button>
+            <p id="message" class="message"></p>
+        </div>
+    </div>
+</body>
+</html>

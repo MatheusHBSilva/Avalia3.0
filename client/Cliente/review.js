@@ -30,6 +30,7 @@ async function loadRestaurantDetails() {
       span.textContent = tag;
       tagsContainer.appendChild(span);
     });
+
   } catch (error) {
     console.error('Erro ao carregar detalhes:', error);
     alert('Erro ao carregar detalhes do restaurante.');
@@ -80,6 +81,12 @@ async function rateRestaurant() {
   const urlParams = new URLSearchParams(window.location.search);
   const restaurantId = urlParams.get('id');
   window.location.href = `/Cliente/rate.html?id=${restaurantId}`;
+}
+
+async function evaluationsView() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const restaurantId = urlParams.get('id');
+  window.location.href = `/Cliente/evaluations.html?id=${restaurantId}`;
 }
 
 document.addEventListener('DOMContentLoaded', loadRestaurantDetails);

@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   fetchRestaurantDetails();
   document.querySelector('.back-button').addEventListener('click', () => {
-    window.history.back();
+    // Usar a rota direta para o dashboard é mais seguro que history.back()
+    window.location.href = '/Restaurante/restaurant_dashboard.html';
   });
 });
 
@@ -12,86 +13,74 @@ async function fetchRestaurantDetails() {
   const message = document.getElementById('message');
 
   try {
-    const meResponse = await fetch('/api/me', {
+    // CORREÇÃO 1: Usando a rota correta para buscar dados do restaurante
+    const meResponse = await fetch('/api/restaurant/me', {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
       credentials: 'include'
     });
 
+    if (!meResponse.ok) {
+        const meData = await meResponse.json();
+        throw new Error(meData.error || 'Erro ao buscar dados do restaurante.');
+    }
     const meData = await meResponse.json();
 
-    if (!meResponse.ok) {
-      message.textContent = meData.error || 'Erro ao buscar dados do restaurante.';
-      message.classList.add('error');
-      message.style.display = 'block';
-      return;
-    }
-
     restaurantNameSpan.textContent = meData.restaurantName;
+    
+    tagsContainer.innerHTML = ''; // Limpa tags antigas antes de adicionar novas
     meData.tags.forEach(tag => {
       const span = document.createElement('span');
+      span.className = 'tag'; // Adiciona uma classe para possível estilização
       span.textContent = tag;
       tagsContainer.appendChild(span);
     });
 
-    const restaurantId = meData.restaurantId;
-    const reportsResponse = await fetch(`/api/report-history?restaurantId=${restaurantId}`, {
+    // CORREÇÃO 2: Usando a rota correta para buscar o histórico de relatórios
+    // Não é preciso enviar o ID, pois o backend o obtém do cookie de sessão.
+    const reportsResponse = await fetch('/api/reports', {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
       credentials: 'include'
     });
 
+    if (!reportsResponse.ok) {
+        const reportsData = await reportsResponse.json();
+        throw new Error(reportsData.error || 'Erro ao carregar histórico de relatórios.');
+    }
     const reportsData = await reportsResponse.json();
 
-    if (!reportsResponse.ok) {
-      message.textContent = reportsData.error || 'Erro ao carregar histórico de relatórios.';
-      message.classList.add('error');
-      message.style.display = 'block';
-      return;
+    reportList.innerHTML = ''; // Limpa a lista antes de preencher
+    if (reportsData.reports.length === 0) {
+        reportList.innerHTML = '<p>Nenhum relatório encontrado.</p>';
+        return;
     }
 
-    reportList.innerHTML = '';
     reportsData.reports.forEach(report => {
       const div = document.createElement('div');
+      div.className = 'report-item'; // Adiciona uma classe para estilização
+      const reportDate = new Date(report.created_at);
+      
+      // Formata a data e o botão para baixar/visualizar
       div.innerHTML = `
-        <p>${report.date}</p>
-        <button onclick="downloadReport(${report.id}, '${report.date}')">Acessar relatório</button>
+        <p>Relatório de: ${reportDate.toLocaleDateString('pt-BR')} às ${reportDate.toLocaleTimeString('pt-BR')}</p>
+        <button onclick="viewReport(${report.id})">Acessar Relatório (PDF)</button>
       `;
       reportList.appendChild(div);
     });
+
   } catch (error) {
-    message.textContent = 'Erro ao conectar ao servidor: ' + error.message;
+    console.error("Erro na página de histórico:", error);
+    message.textContent = 'Erro ao carregar dados: ' + error.message;
     message.classList.add('error');
     message.style.display = 'block';
   }
 }
 
-async function downloadReport(reportId, date) {
-  const message = document.getElementById('message');
-  try {
-    const response = await fetch('/api/download-report', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reportId }),
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao baixar relatório.');
-    }
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `relatorio_${date.replace(/\//g, '-')}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    message.textContent = error.message || 'Erro ao baixar relatório.';
-    message.classList.add('error');
-    message.style.display = 'block';
-  }
+/**
+ * Função para visualizar o relatório em PDF em uma nova aba.
+ * @param {number} reportId - O ID do relatório a ser visualizado.
+ */
+function viewReport(reportId) {
+    // CORREÇÃO 3: Abrimos a rota GET que gera o PDF diretamente.
+    // O navegador cuidará do download ou da exibição do PDF.
+    window.open(`/api/reports/${reportId}`, '_blank');
 }
