@@ -1,11 +1,9 @@
 const express = require('express');
 const router = express.Router();
-
-// Importa o novo controller
 const discoveryController = require('../controllers/discoveryController');
 
-// Define a rota GET para o feed de descoberta.
-// O frontend chamará GET /api/discovery
-router.get('/', discoveryController.getDiscoveryFeed);
+// Define a rota GET para /discovery
+// A junção com o server.js cria o caminho completo que o frontend espera: GET /api/discovery
+router.get('/discovery', discoveryController.getDiscoveryFeed);
 
 module.exports = router;

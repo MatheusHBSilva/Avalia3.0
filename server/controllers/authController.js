@@ -1,15 +1,18 @@
 const bcrypt = require('bcrypt');
-const { pool } = require('../models/db');
+const { db } = require('../models/db');
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
     // Verifica restaurante
-    let { rows: [user] } = await pool.query(
-      'SELECT * FROM restaurants WHERE email = $1',
-      [email]
-    );
+    let user = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT * FROM restaurants WHERE email = ?',
+        [email],
+        (err, row) => (err ? reject(err) : resolve(row))
+      );
+    });
 
     if (user) {
       const match = await bcrypt.compare(password, user.password);
@@ -30,10 +33,13 @@ exports.login = async (req, res) => {
     }
 
     // Verifica cliente
-    ({ rows: [user] } = await pool.query(
-      'SELECT * FROM clients WHERE email = $1',
-      [email]
-    ));
+    user = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT * FROM clients WHERE email = ?',
+        [email],
+        (err, row) => (err ? reject(err) : resolve(row))
+      );
+    });
 
     if (user) {
       const match = await bcrypt.compare(password, user.senha);

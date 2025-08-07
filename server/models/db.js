@@ -1,66 +1,122 @@
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 const { Pool } = require('pg');
+const cron = require('node-cron');
 
-// Configuração da conexão com o PostgreSQL usando a variável de ambiente DATABASE_URL
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Necessário para conexões no Render
+const db = new sqlite3.Database(path.resolve(__dirname, '../../database.db'), err => {
+  if (err) console.error('Erro ao conectar no SQLite:', err.message);
+  else console.log('Conectado ao SQLite com sucesso');
 });
 
-// Testar conexão com o banco
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('Erro ao conectar no PostgreSQL:', err.message);
-  } else {
-    console.log('Conectado ao PostgreSQL com sucesso');
-    release();
-  }
+// Configurar conexão com PostgreSQL (Render)
+const pgPool = new Pool({
+  connectionString: process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@host:porta/database',
 });
 
-// Verificação antes de adicionar colunas de endereço e telefone para a tabela do restaurante
-async function addColumnIfNotExists(tableName, columnName, columnType) {
+// Importar dados do PostgreSQL para SQLite ao iniciar
+async function importFromPostgres() {
   try {
-    const query = `
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = $1 AND column_name = $2
-    `;
-    const result = await pool.query(query, [tableName, columnName]);
-    
-    if (result.rows.length === 0) {
-      await pool.query(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnType}`);
-      console.log(`Coluna ${columnName} adicionada à tabela ${tableName}`);
+    const client = await pgPool.connect();
+
+    const tables = ['restaurants', 'clients', 'favoritos', 'reviews', 'reports'];
+    for (const table of tables) {
+      const res = await client.query(`SELECT * FROM ${table}`);
+      const rows = res.rows;
+
+      db.serialize(() => {
+        db.run(`DELETE FROM ${table}`);
+        rows.forEach(row => {
+          const columns = Object.keys(row).join(',');
+          const placeholders = Object.keys(row).map(() => '?').join(',');
+          const values = Object.values(row);
+          db.run(`INSERT INTO ${table} (${columns}) VALUES (${placeholders})`, values);
+        });
+      });
     }
+
+    console.log('Dados importados do PostgreSQL com sucesso.');
+    client.release();
   } catch (err) {
-    console.error(`Erro ao adicionar/verificar coluna ${columnName} na tabela ${tableName}:`, err.message);
+    console.error('Erro ao importar do PostgreSQL:', err);
   }
 }
 
-// Função para criar tabelas (executar apenas uma vez ou a cada start)
-async function initTables() {
+// Exportar dados do SQLite para PostgreSQL a cada 5 minutos
+async function exportToPostgres() {
   try {
-    // Criar tabela restaurants
-    await pool.query(`
+    const client = await pgPool.connect();
+
+    const tables = ['restaurants', 'clients', 'favoritos', 'reviews', 'reports'];
+    for (const table of tables) {
+      await client.query(`DELETE FROM ${table}`); // limpa o conteúdo
+
+      db.all(`SELECT * FROM ${table}`, async (err, rows) => {
+        if (err) {
+          console.error(`Erro ao ler dados de ${table} no SQLite:`, err);
+        } else {
+          for (const row of rows) {
+            const columns = Object.keys(row).join(',');
+            const placeholders = Object.keys(row).map((_, i) => `$${i + 1}`).join(',');
+            const values = Object.values(row);
+            await client.query(`INSERT INTO ${table} (${columns}) VALUES (${placeholders})`, values);
+          }
+        }
+      });
+    }
+
+    console.log('Dados exportados para o PostgreSQL com sucesso.');
+    client.release();
+  } catch (err) {
+    console.error('Erro ao exportar para o PostgreSQL:', err);
+  }
+}
+
+// Chamada imediata na inicialização
+importFromPostgres();
+
+// Agendar exportação a cada 5 minutos
+cron.schedule('*/3 * * * *', exportToPostgres);
+
+// Resto do código original
+function addColumnIfNotExists(tableName, columnName, columnType) {
+  db.all(`PRAGMA table_info(${tableName})`, (err, columns) => {
+    if (err) {
+      console.error(`Erro ao verificar colunas da tabela ${tableName}:`, err.message);
+    } else {
+      const columnExists = columns.some(col => col.name === columnName);
+      if (!columnExists) {
+        db.run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnType}`, err => {
+          if (err) {
+            console.error(`Erro ao adicionar coluna ${columnName}:`, err.message);
+          } else {
+            console.log(`Coluna ${columnName} adicionada à tabela ${tableName}`);
+          }
+        });
+      }
+    }
+  });
+}
+
+function initTables() {
+  db.serialize(() => {
+    db.run(`
       CREATE TABLE IF NOT EXISTS restaurants (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         restaurant_name TEXT NOT NULL,
         cnpj TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
         tags TEXT,
-        endereco TEXT,
-        telefone TEXT,
         created_at TEXT NOT NULL
       )
     `);
 
-    // Adicionar colunas endereço e telefone, se não existirem
-    await addColumnIfNotExists('restaurants', 'endereco', 'TEXT');
-    await addColumnIfNotExists('restaurants', 'telefone', 'TEXT');
+    addColumnIfNotExists('restaurants', 'endereco', 'TEXT');
+    addColumnIfNotExists('restaurants', 'telefone', 'TEXT');
 
-    // Criar tabela clients
-    await pool.query(`
+    db.run(`
       CREATE TABLE IF NOT EXISTS clients (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
         sobrenome TEXT NOT NULL,
         cpf TEXT NOT NULL UNIQUE,
@@ -72,54 +128,58 @@ async function initTables() {
       )
     `);
 
-    // Criar tabela favoritos
-    await pool.query(`
+    db.run(`
       CREATE TABLE IF NOT EXISTS favoritos (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         client_id INTEGER NOT NULL,
         restaurant_id INTEGER NOT NULL,
         created_at TEXT NOT NULL,
-        FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
-        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
+        FOREIGN KEY (client_id) REFERENCES clients(id),
+        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id),
         UNIQUE(client_id, restaurant_id)
       )
     `);
 
-    // Criar tabela reviews
-    await pool.query(`
+    db.run(`
       CREATE TABLE IF NOT EXISTS reviews (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         restaurant_id INTEGER NOT NULL,
         reviewer_name TEXT NOT NULL,
         rating INTEGER NOT NULL,
         review_text TEXT,
         created_at TEXT NOT NULL,
-        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
+        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
       )
     `);
 
-    // Criar tabela reports
-    await pool.query(`
+    db.run(`
       CREATE TABLE IF NOT EXISTS reports (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         restaurant_id INTEGER NOT NULL,
         analysis TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
+        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
       )
     `);
+  });
 
-    // Verificar colunas da tabela restaurants
-    const columns = await pool.query(`
-      SELECT column_name, data_type 
-      FROM information_schema.columns 
-      WHERE table_name = 'restaurants'
-    `);
-    console.log('Colunas atuais da tabela restaurants:');
-    columns.rows.forEach(col => console.log(`- ${col.column_name} (${col.data_type})`));
-  } catch (err) {
-    console.error('Erro ao inicializar tabelas:', err.message);
-  }
+  db.all('PRAGMA table_info(restaurants)', (err, rows) => {
+    if (err) {
+      console.error('Erro ao verificar colunas:', err.message);
+    } else {
+      console.log('Colunas atuais da tabela restaurants:');
+      rows.forEach(col => console.log(`- ${col.name} (${col.type})`));
+    }
+  });
+
+  db.all('PRAGMA table_info(clients)', (err, rows) => {
+    if (err) {
+      console.error('Erro ao verificar colunas da tabela clients:', err.message);
+    } else {
+      console.log('Colunas atuais da tabela clients:');
+      rows.forEach(col => console.log(`- ${col.name} (${col.type})`));
+    }
+  });
 }
 
-module.exports = { pool, initTables };
+module.exports = { db, initTables };

@@ -1,4 +1,4 @@
-const { pool } = require('../models/db');
+const { db } = require('../models/db');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const PDFDocument = require('pdfkit');
 
@@ -9,28 +9,37 @@ exports.clientRecommendation = async (req, res) => {
     const clientId = req.cookies.clientId;
 
     // 1. Buscar até 100 avaliações recentes
-    const { rows: reviews } = await pool.query(
-      `SELECT reviewer_name, rating, review_text
-       FROM reviews
-       WHERE restaurant_id = $1
-       ORDER BY created_at DESC
-       LIMIT 100`,
-      [restaurantId]
-    );
+    const reviews = await new Promise((resolve, reject) => {
+      db.all(
+        `SELECT reviewer_name, rating, review_text
+         FROM reviews
+         WHERE restaurant_id = ?
+         ORDER BY created_at DESC
+         LIMIT 100`,
+        [restaurantId],
+        (err, rows) => (err ? reject(err) : resolve(rows))
+      );
+    });
 
     // 2. Tags do restaurante e do cliente
-    const { rows: [restaurant] } = await pool.query(
-      'SELECT tags FROM restaurants WHERE id = $1',
-      [restaurantId]
-    );
+    const restaurant = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT tags FROM restaurants WHERE id = ?',
+        [restaurantId],
+        (err, row) => (err ? reject(err) : resolve(row))
+      );
+    });
     const restaurantTags = restaurant?.tags
       ? restaurant.tags.split(',').map(t => t.trim())
       : [];
 
-    const { rows: [client] } = await pool.query(
-      'SELECT tags FROM clients WHERE id = $1',
-      [clientId]
-    );
+    const client = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT tags FROM clients WHERE id = ?',
+        [clientId],
+        (err, row) => (err ? reject(err) : resolve(row))
+      );
+    });
     const clientTags = client?.tags
       ? client.tags.split(',').map(t => t.trim())
       : [];
@@ -39,12 +48,18 @@ exports.clientRecommendation = async (req, res) => {
     const reviewTexts = reviews
       .map(
         r =>
-          `${r.reviewer_name} (${r.rating} estrelas): "${r.review_text || 'Sem comentário'}"`
+          `${r.reviewer_name} (${r.rating} estrelas): "${
+            r.review_text || 'Sem comentário'
+          }"`
       )
       .join('\n');
 
     const prompt = `
-Analise as seguintes avaliações de um restaurante, incluindo texto e nota (1–5), junto com as tags do restaurante (${restaurantTags.join(', ')}) e do cliente (${clientTags.join(', ')}). Forneça:
+Analise as seguintes avaliações de um restaurante, incluindo texto e nota (1–5), junto com as tags do restaurante (${restaurantTags.join(
+      ', '
+    )}) e do cliente (${clientTags.join(
+      ', '
+    )}). Forneça:
 1. Recomendação (sim/não) e justificativa.
 2. Resumo de pontos fortes e fracos.
 3. Até 5 linhas no total.
@@ -55,7 +70,9 @@ ${reviewTexts}
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error('Chave da API do Gemini não configurada no .env.');
+      throw new Error(
+        'Chave da API do Gemini não configurada no .env.'
+      );
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);

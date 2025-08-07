@@ -1,4 +1,5 @@
-const { pool } = require('../models/db');
+// controllers/analysisController.js
+const { db } = require('../models/db');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const PDFDocument = require('pdfkit');
 
@@ -7,14 +8,17 @@ exports.businessAnalysis = async (req, res) => {
 
   try {
     // 1. Busca até 50 avaliações recentes
-    const { rows: reviews } = await pool.query(
-      `SELECT reviewer_name, rating, review_text, created_at
-       FROM reviews
-       WHERE restaurant_id = $1
-       ORDER BY created_at DESC
-       LIMIT 50`,
-      [restaurantId]
-    );
+    const reviews = await new Promise((resolve, reject) => {
+      db.all(
+        `SELECT reviewer_name, rating, review_text, created_at
+         FROM reviews
+         WHERE restaurant_id = ?
+         ORDER BY created_at DESC
+         LIMIT 50`,
+        [restaurantId],
+        (err, rows) => (err ? reject(err) : resolve(rows))
+      );
+    });
 
     // 2. Monta prompt para Gemini
     const prompt = `
@@ -24,6 +28,7 @@ exports.businessAnalysis = async (req, res) => {
       3. Sugestões de melhorias.
       4. Média das notas e visão de desempenho.
       5. Relatório profissional e estruturado.
+      Desconsidere avaliações que não estejam relacionadas à experiência do cliente com o restaurante, como comentários irrelevantes, vazios ou fora de contexto.
       Seguem as avaliações:
       ${reviews
         .map(
@@ -36,7 +41,9 @@ exports.businessAnalysis = async (req, res) => {
     // 3. Chama a API Gemini
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error('Chave da API do Gemini não configurada no .env.');
+      throw new Error(
+        'Chave da API do Gemini não configurada no .env.'
+      );
     }
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
@@ -46,11 +53,14 @@ exports.businessAnalysis = async (req, res) => {
     const analysis = await result.response.text();
 
     // 4. Salva no banco de dados
-    await pool.query(
-      `INSERT INTO reports (restaurant_id, analysis, created_at)
-       VALUES ($1, $2, $3)`,
-      [restaurantId, analysis, new Date().toISOString()]
-    );
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO reports (restaurant_id, analysis, created_at)
+         VALUES (?, ?, ?)`,
+        [restaurantId, analysis, new Date().toISOString()],
+        err => (err ? reject(err) : resolve())
+      );
+    });
 
     // 5. Se PDF, gera e envia o buffer
     if (format === 'pdf') {

@@ -1,51 +1,50 @@
 require('dotenv').config();
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcrypt');
-const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const PDFDocument = require('pdfkit');
+const cors = require('cors');
 
+// Modelos e Inicialização do DB
 const { initTables } = require('./models/db');
 
+// Importação de todas as rotas
 const restaurantRoutes = require('./routes/restaurantRoutes');
 const clientRoutes     = require('./routes/clientRoutes');
 const authRoutes       = require('./routes/authRoutes');
 const favoriteRoutes   = require('./routes/favoriteRoutes');
 const reviewRoutes     = require('./routes/reviewRoutes');
-const analysisRoutes   = require('./routes/analysisRoutes');
+const analysisRoutes   = require('./routes/analysisRoutes'); // <-- Importante
 const recommendationRoutes = require('./routes/recommendationRoutes');
-const reportRoutes       = require('./routes/reportRoutes');
-const discoveryRoutes = require('./routes/discoveryRoutes');
+const reportRoutes     = require('./routes/reportRoutes');
+const discoveryRoutes  = require('./routes/discoveryRoutes');
 
+// Inicialização do App Express
 const app = express();
-const port = 3000;
 
-// Inicializa conexão e cria tabelas
-initTables();
-
-// Middleware
+// Middleware Essencial
 app.use(cors({ origin: ['https://sua-app.render.com', 'http://localhost:3000'], credentials: true }));
-app.use(express.json());
-app.use(cookieParser());
+app.use(express.json()); // Para entender requisições com corpo JSON
+app.use(cookieParser()); // Para ler os cookies de sessão
+
+// Servir os arquivos estáticos do frontend (HTML, CSS, JS do cliente)
 app.use(express.static(path.join(__dirname, '../client')));
 
+// Inicializa as tabelas do banco de dados
+initTables();
 
-// Rotas agrupadas
+// --- REGISTRO DAS ROTAS DA API ---
+// O Express vai procurar por rotas correspondentes na ordem em que são listadas.
 app.use('/api', restaurantRoutes);
 app.use('/api', clientRoutes);
 app.use('/api', authRoutes);
 app.use('/api', favoriteRoutes);
 app.use('/api', reviewRoutes);
-app.use('/api', analysisRoutes);
+app.use('/api', analysisRoutes); // <-- A rota de análise está registrada aqui
 app.use('/api', recommendationRoutes);
 app.use('/api', reportRoutes);
-app.use('/api/discovery', discoveryRoutes);
+app.use('/api', discoveryRoutes);
 
-
-// Iniciar servidor
+// Iniciar o servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);

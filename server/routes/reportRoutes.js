@@ -1,16 +1,13 @@
 const express = require('express');
-const { idQueryRestaurant } = require('../middlewares/restaurantMiddlewares');
-const validateReportId = require('../middlewares/validateReportId');
 const router = express.Router();
-const {
-  getReportHistory,
-  downloadReport
-} = require('../controllers/reportController');
+const reportController = require('../controllers/reportController');
+const { idCookieRestaurant } = require('../middlewares/restaurantMiddlewares'); // Middleware de segurança
 
-// GET  /api/report-history
-router.get('/report-history', idQueryRestaurant, getReportHistory);
+// GET /api/reports -> Busca a lista de relatórios
+router.get('/reports', idCookieRestaurant, reportController.getReportsHistory);
 
-// POST /api/download-report
-router.post('/download-report', validateReportId, downloadReport);
+// GET /api/reports/:id -> Busca um relatório específico para gerar o PDF
+// :id é um parâmetro dinâmico (ex: /api/reports/1, /api/reports/2)
+router.get('/reports/:id', idCookieRestaurant, reportController.getReportById);
 
 module.exports = router;
