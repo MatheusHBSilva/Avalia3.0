@@ -2,34 +2,25 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const { Pool } = require('pg');
 const cron = require('node-cron');
-const retry = require('async-retry');
 
 const db = new sqlite3.Database(path.resolve(__dirname, '../../database.db'), err => {
   if (err) console.error('Erro ao conectar no SQLite:', err.message);
   else console.log('Conectado ao SQLite com sucesso');
 });
 
-// Conexão PostgreSQL com configuração otimizada
+// Conexão PostgreSQL com SSL ativado
 const pgPool = new Pool({
   connectionString: process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@host:porta/database',
   ssl: {
     rejectUnauthorized: false,
   },
-  max: 10, // Máximo de 10 conexões simultâneas
-  idleTimeoutMillis: 30000, // Fecha conexões inativas após 30 segundos
-  connectionTimeoutMillis: 2000, // Timeout de tentativas de conexão após 2 segundos
-});
-
-// Tratamento de erros inesperados na pool
-pgPool.on('error', (err) => {
-  console.error('Erro inesperado na conexão com o PostgreSQL:', err.stack);
 });
 
 // Importar dados do PostgreSQL para SQLite ao iniciar
 async function importFromPostgres() {
-  let client;
   try {
-    client = await pgPool.connect();
+    const client = await pgPool.connect();
+
     const tables = ['restaurants', 'clients', 'favoritos', 'reviews', 'reports'];
     for (const table of tables) {
       const res = await client.query(`SELECT * FROM ${table}`);
@@ -41,85 +32,79 @@ async function importFromPostgres() {
           const columns = Object.keys(row).join(',');
           const placeholders = Object.keys(row).map(() => '?').join(',');
           const values = Object.values(row);
-          db.run(`INSERT INTO ${table} (${columns}) VALUES (${placeholders})`, values, err => {
-            if (err) console.error(`Erro ao inserir em ${table} no SQLite:`, err);
-          });
+          db.run(`INSERT INTO ${table} (${columns}) VALUES (${placeholders})`, values);
         });
       });
     }
+
     console.log('Dados importados do PostgreSQL com sucesso.');
+    client.release();
   } catch (err) {
     console.error('Erro ao importar do PostgreSQL:', err);
-  } finally {
-    if (client) client.release();
   }
 }
 
-// Exportar dados do SQLite para PostgreSQL com UPSERT
+// Exportar dados do SQLite para PostgreSQL com UPSERT a cada 5 minutos
 async function exportToPostgres() {
-  let client;
   try {
-    client = await pgPool.connect();
+    const client = await pgPool.connect();
     const tables = ['restaurants', 'clients', 'favoritos', 'reviews', 'reports'];
 
     for (const table of tables) {
-      await new Promise((resolve, reject) => {
-        db.all(`SELECT * FROM ${table}`, async (err, rows) => {
-          if (err) {
-            console.error(`Erro ao ler dados de ${table} no SQLite:`, err);
-            return reject(err);
-          }
+      db.all(`SELECT * FROM ${table}`, async (err, rows) => {
+        if (err) {
+          console.error(`Erro ao ler dados de ${table} no SQLite:`, err);
+        } else {
           for (const row of rows) {
             const columns = Object.keys(row);
             const values = Object.values(row);
+
             const columnList = columns.join(',');
             const placeholders = columns.map((_, i) => `$${i + 1}`).join(',');
+
             const updates = columns
               .filter(col => col !== 'id')
               .map(col => `${col} = EXCLUDED.${col}`)
               .join(', ');
+
             const conflictClause = table === 'favoritos' ? '(client_id, restaurant_id)' :
-                                  table === 'clients' ? '(cpf)' :
-                                  table === 'restaurants' ? '(email)' :
-                                  table === 'reviews' ? '(id)' :
-                                  table === 'reports' ? '(id)' :
-                                  '(id)';
+                                   table === 'clients' ? '(cpf)' :
+                                   table === 'restaurants' ? '(email)' :
+                                   table === 'reviews' ? '(id)' :
+                                   table === 'reports' ? '(id)' :
+                                   '(id)';
+
             const query = `
               INSERT INTO ${table} (${columnList})
               VALUES (${placeholders})
               ON CONFLICT ${conflictClause}
               DO UPDATE SET ${updates}
             `;
+
             try {
-              await retry(
-                async () => {
-                  await client.query(query, values);
-                },
-                {
-                  retries: 3,
-                  factor: 2,
-                  minTimeout: 1000,
-                  maxTimeout: 5000,
-                  onRetry: (err) => console.log(`Tentando novamente para ${table}: ${err.message}`),
-                }
-              );
+              await client.query(query, values);
             } catch (e) {
               console.error(`Erro ao inserir/atualizar dados em ${table}:`, e);
             }
           }
-          resolve();
-        });
+        }
       });
     }
+
     console.log('Dados exportados para o PostgreSQL com sucesso.');
+    client.release();
   } catch (err) {
     console.error('Erro ao exportar para o PostgreSQL:', err);
-  } finally {
-    if (client) client.release();
   }
 }
 
-// Função para adicionar colunas se não existirem
+// Rodar importação ao iniciar
+importFromPostgres();
+
+// Rodar exportação a cada 5 minutos
+cron.schedule('*/5 * * * *', exportToPostgres);
+
+// ---------- CÓDIGO ORIGINAL ----------
 function addColumnIfNotExists(tableName, columnName, columnType) {
   db.all(`PRAGMA table_info(${tableName})`, (err, columns) => {
     if (err) {
@@ -139,7 +124,6 @@ function addColumnIfNotExists(tableName, columnName, columnType) {
   });
 }
 
-// Inicializar tabelas
 function initTables() {
   db.serialize(() => {
     db.run(`
@@ -224,11 +208,5 @@ function initTables() {
     }
   });
 }
-
-// Rodar importação ao iniciar
-importFromPostgres();
-
-// Rodar exportação a cada 5 minutos
-cron.schedule('*/5 * * * *', exportToPostgres);
 
 module.exports = { db, initTables };
