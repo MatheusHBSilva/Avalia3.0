@@ -8,9 +8,12 @@ const db = new sqlite3.Database(path.resolve(__dirname, '../../database.db'), er
   else console.log('Conectado ao SQLite com sucesso');
 });
 
-// Conexão com PostgreSQL do Render
+// Conexão PostgreSQL com SSL ativado
 const pgPool = new Pool({
   connectionString: process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@host:porta/database',
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 // Importar dados do PostgreSQL para SQLite ao iniciar
@@ -101,7 +104,7 @@ importFromPostgres();
 // Rodar exportação a cada 5 minutos
 cron.schedule('*/5 * * * *', exportToPostgres);
 
-// ---------- RESTO DO SEU CÓDIGO ORIGINAL ----------
+// ---------- CÓDIGO ORIGINAL ----------
 function addColumnIfNotExists(tableName, columnName, columnType) {
   db.all(`PRAGMA table_info(${tableName})`, (err, columns) => {
     if (err) {
