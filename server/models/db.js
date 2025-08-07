@@ -8,14 +8,6 @@ const db = new sqlite3.Database(path.resolve(__dirname, '../../database.db'), er
   else console.log('Conectado ao SQLite com sucesso');
 });
 
-// Conexão PostgreSQL com SSL ativado
-const pgPool = new Pool({
-  connectionString: process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@host:porta/database',
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
-
 // Importar dados do PostgreSQL para SQLite ao iniciar
 async function importFromPostgres() {
   try {
@@ -46,8 +38,17 @@ async function importFromPostgres() {
 
 // Exportar dados do SQLite para PostgreSQL com UPSERT a cada 5 minutos
 async function exportToPostgres() {
+  const pgPoolExport = new Pool({
+    connectionString: process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@host:porta/database',
+    ssl: {
+      rejectUnauthorized: false,
+    },
+    idleTimeoutMillis: 60000, // 60 segundos para conexões inativas
+    connectionTimeoutMillis: 10000, // 10 segundos para tentar estabelecer conexão
+  });
+
   try {
-    const client = await pgPool.connect();
+    const client = await pgPoolExport.connect();
     const tables = ['restaurants', 'clients', 'favoritos', 'reviews', 'reports'];
 
     for (const table of tables) {
@@ -95,8 +96,18 @@ async function exportToPostgres() {
     client.release();
   } catch (err) {
     console.error('Erro ao exportar para o PostgreSQL:', err);
+  } finally {
+    await pgPoolExport.end(); // Fecha o pool específico após a exportação
   }
 }
+
+// Conexão PostgreSQL para importação
+const pgPool = new Pool({
+  connectionString: process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@host:porta/database',
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
 
 // Rodar importação ao iniciar
 importFromPostgres();
