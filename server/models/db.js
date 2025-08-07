@@ -101,8 +101,8 @@ async function exportToPostgres() {
 // Rodar importação ao iniciar
 importFromPostgres();
 
-// Rodar exportação a cada 5 minutos
-cron.schedule('*/5 * * * *', exportToPostgres);
+// Rodar exportação a cada 1 minuto
+cron.schedule('*/1 * * * *', exportToPostgres);
 
 // ---------- CÓDIGO ORIGINAL ----------
 function addColumnIfNotExists(tableName, columnName, columnType) {
