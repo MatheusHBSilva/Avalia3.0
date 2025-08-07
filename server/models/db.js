@@ -10,8 +10,22 @@ const db = new sqlite3.Database(path.resolve(__dirname, '../../database.db'), er
 
 // Importar dados do PostgreSQL para SQLite ao iniciar
 async function importFromPostgres() {
+  const connectionString = process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@localhost:5432/database';
+  if (!connectionString.startsWith('postgresql://')) {
+    console.error('Erro: String de conexão do PostgreSQL inválida:', connectionString);
+    return;
+  }
+
+  const pgPoolImport = new Pool({
+    connectionString,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
+
   try {
-    const client = await pgPool.connect();
+    const client = await pgPoolImport.connect();
+    console.log('Conexão ao PostgreSQL estabelecida com sucesso para importação.');
 
     const tables = ['restaurants', 'clients', 'favoritos', 'reviews', 'reports'];
     for (const table of tables) {
@@ -32,82 +46,80 @@ async function importFromPostgres() {
     console.log('Dados importados do PostgreSQL com sucesso.');
     client.release();
   } catch (err) {
-    console.error('Erro ao importar do PostgreSQL:', err);
+    console.error('Erro ao importar do PostgreSQL:', err.message);
+  } finally {
+    await pgPoolImport.end();
   }
 }
 
 // Exportar dados do SQLite para PostgreSQL com UPSERT a cada 5 minutos
 async function exportToPostgres() {
   const pgPoolExport = new Pool({
-    connectionString: process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@host:porta/database',
+    connectionString: process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@localhost:5432/database',
     ssl: {
       rejectUnauthorized: false,
     },
-    idleTimeoutMillis: 60000, // 60 segundos para conexões inativas
-    connectionTimeoutMillis: 10000, // 10 segundos para tentar estabelecer conexão
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 10000,
   });
 
   try {
     const client = await pgPoolExport.connect();
     const tables = ['restaurants', 'clients', 'favoritos', 'reviews', 'reports'];
 
-    for (const table of tables) {
+    // Processar todas as tabelas em paralelo, mas aguardar a conclusão
+    await Promise.all(tables.map(table => new Promise((resolve, reject) => {
       db.all(`SELECT * FROM ${table}`, async (err, rows) => {
         if (err) {
           console.error(`Erro ao ler dados de ${table} no SQLite:`, err);
-        } else {
-          for (const row of rows) {
-            const columns = Object.keys(row);
-            const values = Object.values(row);
+          reject(err);
+          return;
+        }
 
-            const columnList = columns.join(',');
-            const placeholders = columns.map((_, i) => `$${i + 1}`).join(',');
+        for (const row of rows) {
+          const columns = Object.keys(row);
+          const values = Object.values(row);
 
-            const updates = columns
-              .filter(col => col !== 'id')
-              .map(col => `${col} = EXCLUDED.${col}`)
-              .join(', ');
+          const columnList = columns.join(',');
+          const placeholders = columns.map((_, i) => `$${i + 1}`).join(',');
 
-            const conflictClause = table === 'favoritos' ? '(client_id, restaurant_id)' :
-                                   table === 'clients' ? '(cpf)' :
-                                   table === 'restaurants' ? '(email)' :
-                                   table === 'reviews' ? '(id)' :
-                                   table === 'reports' ? '(id)' :
-                                   '(id)';
+          const updates = columns
+            .filter(col => col !== 'id')
+            .map(col => `${col} = EXCLUDED.${col}`)
+            .join(', ');
 
-            const query = `
-              INSERT INTO ${table} (${columnList})
-              VALUES (${placeholders})
-              ON CONFLICT ${conflictClause}
-              DO UPDATE SET ${updates}
-            `;
+          const conflictClause = table === 'favoritos' ? '(client_id, restaurant_id)' :
+                                table === 'clients' ? '(cpf)' :
+                                table === 'restaurants' ? '(email)' :
+                                table === 'reviews' ? '(id)' :
+                                table === 'reports' ? '(id)' :
+                                '(id)';
 
-            try {
-              await client.query(query, values);
-            } catch (e) {
-              console.error(`Erro ao inserir/atualizar dados em ${table}:`, e);
-            }
+          const query = `
+            INSERT INTO ${table} (${columnList})
+            VALUES (${placeholders})
+            ON CONFLICT ${conflictClause}
+            DO UPDATE SET ${updates}
+          `;
+
+          try {
+            await client.query(query, values);
+          } catch (e) {
+            console.error(`Erro ao inserir/atualizar dados em ${table}:`, e);
           }
         }
+        resolve();
       });
-    }
+    })));
 
     console.log('Dados exportados para o PostgreSQL com sucesso.');
     client.release();
   } catch (err) {
     console.error('Erro ao exportar para o PostgreSQL:', err);
   } finally {
-    await pgPoolExport.end(); // Fecha o pool específico após a exportação
+    await pgPoolExport.end();
   }
 }
-
-// Conexão PostgreSQL para importação
-const pgPool = new Pool({
-  connectionString: process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@host:porta/database',
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
 
 // Rodar importação ao iniciar
 importFromPostgres();
