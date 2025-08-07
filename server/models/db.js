@@ -8,7 +8,7 @@ const db = new sqlite3.Database(path.resolve(__dirname, '../../database.db'), er
   else console.log('Conectado ao SQLite com sucesso');
 });
 
-// Configurar conexão com PostgreSQL (Render)
+// Conexão com PostgreSQL do Render
 const pgPool = new Pool({
   connectionString: process.env.PG_CONNECTION_STRING || 'postgresql://usuario:senha@host:porta/database',
 });
@@ -41,24 +41,48 @@ async function importFromPostgres() {
   }
 }
 
-// Exportar dados do SQLite para PostgreSQL a cada 5 minutos
+// Exportar dados do SQLite para PostgreSQL com UPSERT a cada 5 minutos
 async function exportToPostgres() {
   try {
     const client = await pgPool.connect();
-
     const tables = ['restaurants', 'clients', 'favoritos', 'reviews', 'reports'];
-    for (const table of tables) {
-      await client.query(`DELETE FROM ${table}`); // limpa o conteúdo
 
+    for (const table of tables) {
       db.all(`SELECT * FROM ${table}`, async (err, rows) => {
         if (err) {
           console.error(`Erro ao ler dados de ${table} no SQLite:`, err);
         } else {
           for (const row of rows) {
-            const columns = Object.keys(row).join(',');
-            const placeholders = Object.keys(row).map((_, i) => `$${i + 1}`).join(',');
+            const columns = Object.keys(row);
             const values = Object.values(row);
-            await client.query(`INSERT INTO ${table} (${columns}) VALUES (${placeholders})`, values);
+
+            const columnList = columns.join(',');
+            const placeholders = columns.map((_, i) => `$${i + 1}`).join(',');
+
+            const updates = columns
+              .filter(col => col !== 'id')
+              .map(col => `${col} = EXCLUDED.${col}`)
+              .join(', ');
+
+            const conflictClause = table === 'favoritos' ? '(client_id, restaurant_id)' :
+                                   table === 'clients' ? '(cpf)' :
+                                   table === 'restaurants' ? '(email)' :
+                                   table === 'reviews' ? '(id)' :
+                                   table === 'reports' ? '(id)' :
+                                   '(id)';
+
+            const query = `
+              INSERT INTO ${table} (${columnList})
+              VALUES (${placeholders})
+              ON CONFLICT ${conflictClause}
+              DO UPDATE SET ${updates}
+            `;
+
+            try {
+              await client.query(query, values);
+            } catch (e) {
+              console.error(`Erro ao inserir/atualizar dados em ${table}:`, e);
+            }
           }
         }
       });
@@ -71,13 +95,13 @@ async function exportToPostgres() {
   }
 }
 
-// Chamada imediata na inicialização
+// Rodar importação ao iniciar
 importFromPostgres();
 
-// Agendar exportação a cada 5 minutos
-cron.schedule('*/3 * * * *', exportToPostgres);
+// Rodar exportação a cada 5 minutos
+cron.schedule('*/5 * * * *', exportToPostgres);
 
-// Resto do código original
+// ---------- RESTO DO SEU CÓDIGO ORIGINAL ----------
 function addColumnIfNotExists(tableName, columnName, columnType) {
   db.all(`PRAGMA table_info(${tableName})`, (err, columns) => {
     if (err) {
