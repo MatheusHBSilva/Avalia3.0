@@ -1,5 +1,6 @@
 let currentMode = 'all'; // 'all', 'favorites', ou 'search'
 let currentSearchQuery = '';
+let isLoading = false; // Flag para evitar chamadas concorrentes
 
 // Função de debounce para limitar chamadas frequentes
 function debounce(func, wait) {
@@ -41,6 +42,9 @@ function updateDisplay() {
 }
 
 async function loadRestaurants() {
+  if (isLoading) return; // Evitar chamadas concorrentes
+  isLoading = true;
+
   try {
     const restaurantList = document.getElementById('restaurant-list');
     restaurantList.innerHTML = ''; // Limpar lista atual
@@ -144,6 +148,8 @@ async function loadRestaurants() {
     if (!error.message.includes("Unexpected token '<'")) {
         alert('Erro ao carregar restaurantes.');
     }
+  } finally {
+    isLoading = false; // Liberar a flag após a conclusão
   }
 }
 
@@ -205,8 +211,8 @@ async function searchRestaurants() {
   await loadRestaurants();
 }
 
-// Debounce para searchRestaurants (500ms de espera)
-const debouncedSearchRestaurants = debounce(searchRestaurants, 500);
+// Debounce para searchRestaurants (800ms de espera)
+const debouncedSearchRestaurants = debounce(searchRestaurants, 800);
 
 // Fechar dropdown ao clicar fora
 document.addEventListener('click', (e) => {
