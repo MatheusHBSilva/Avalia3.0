@@ -63,7 +63,19 @@ async function loadRestaurants() {
       return;
     }
 
-    data.restaurants.forEach(restaurant => {
+    // Usar um Set para evitar duplicatas
+    const displayedRestaurantIds = new Set();
+
+    // Filtrar duplicatas antes de renderizar
+    const uniqueRestaurants = data.restaurants.filter(restaurant => {
+      if (displayedRestaurantIds.has(restaurant.id)) {
+        return false;
+      }
+      displayedRestaurantIds.add(restaurant.id);
+      return true;
+    });
+
+    uniqueRestaurants.forEach(restaurant => {
       const restaurantCard = document.createElement('div');
       restaurantCard.classList.add('restaurant-card');
       restaurantCard.innerHTML = `
@@ -174,6 +186,7 @@ async function searchRestaurants() {
   const searchInput = document.getElementById('search-input');
   if (!searchInput) return; // Evitar busca se a barra de pesquisa não estiver presente
   const query = searchInput.value.trim();
+  if (currentSearchQuery === query) return; // Evitar recarregar se a query não mudou
   currentSearchQuery = query;
   currentMode = query ? 'search' : 'all';
   await loadRestaurants();
