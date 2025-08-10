@@ -1,6 +1,19 @@
 let currentMode = 'all'; // 'all', 'favorites', ou 'search'
 let currentSearchQuery = '';
 
+// Função de debounce para limitar chamadas frequentes
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 function updateDisplay() {
   const searchContainer = document.getElementById('search-container');
   const searchBar = document.querySelector('.search-bar');
@@ -22,7 +35,7 @@ function updateDisplay() {
       searchContainer.innerHTML = '';
     }
     if (!searchContainer.querySelector('.search-bar')) {
-      searchContainer.innerHTML = '<div class="search-bar"><input type="text" id="search-input" placeholder="Pesquisar restaurantes..." oninput="searchRestaurants()"></div>';
+      searchContainer.innerHTML = '<div class="search-bar"><input type="text" id="search-input" placeholder="Pesquisar restaurantes..." oninput="debouncedSearchRestaurants()"></div>';
     }
   }
 }
@@ -178,7 +191,7 @@ async function showAllRestaurants() {
   currentMode = 'all'; // Resetar o modo para 'all'
   currentSearchQuery = ''; // Limpar a query de busca
   const searchContainer = document.getElementById('search-container');
-  searchContainer.innerHTML = '<div class="search-bar"><input type="text" id="search-input" placeholder="Pesquisar restaurantes..." oninput="searchRestaurants()"></div>';
+  searchContainer.innerHTML = '<div class="search-bar"><input type="text" id="search-input" placeholder="Pesquisar restaurantes..." oninput="debouncedSearchRestaurants()"></div>';
   await loadRestaurants();
 }
 
@@ -191,6 +204,9 @@ async function searchRestaurants() {
   currentMode = query ? 'search' : 'all';
   await loadRestaurants();
 }
+
+// Debounce para searchRestaurants (500ms de espera)
+const debouncedSearchRestaurants = debounce(searchRestaurants, 500);
 
 // Fechar dropdown ao clicar fora
 document.addEventListener('click', (e) => {
