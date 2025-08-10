@@ -30,18 +30,12 @@ function updateDisplay() {
 async function loadRestaurants() {
   try {
     const restaurantList = document.getElementById('restaurant-list');
-    if (!restaurantList) {
-      throw new Error('Elemento restaurant-list não encontrado no DOM.');
-    }
     restaurantList.innerHTML = ''; // Limpar lista atual
 
     // Carregar favoritos do cliente
     const favoritesResponse = await fetch('/api/favorites', { credentials: 'include' });
-    if (!favoritesResponse.ok) {
-      throw new Error(`Erro ao carregar favoritos: ${favoritesResponse.statusText}`);
-    }
     const favoritesData = await favoritesResponse.json();
-    const favorites = new Set(favoritesData.favorites || []);
+    const favorites = new Set(favoritesData.favorites);
 
     let url = '';
     if (currentMode === 'favorites') {
@@ -53,70 +47,87 @@ async function loadRestaurants() {
     }
 
     const response = await fetch(url, { credentials: 'include' });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Erro na requisição: ${response.statusText}`);
-    }
     const data = await response.json();
+    if (!response.ok) {
+      // Adiciona uma verificação para o caso de não haver restaurantes recomendados
+      if (data.restaurants && data.restaurants.length === 0) {
+        restaurantList.innerHTML = '<p class="no-results">Nenhum restaurante encontrado com base nos seus interesses. Explore e avalie mais para receber recomendações!</p>';
+        return;
+      }
+      throw new Error(data.error || 'Erro ao carregar restaurantes.');
+    }
 
-    if (!data.restaurants || data.restaurants.length === 0) {
-      restaurantList.innerHTML = '<p class="no-results">Nenhum restaurante encontrado.</p>';
+    // Se a resposta for um array vazio, exibe uma mensagem
+    if (data.restaurants.length === 0) {
+      restaurantList.innerHTML = '<p class="no-results">Nenhum restaurante encontrado. Tente buscar por um nome ou explore os favoritos.</p>';
       return;
     }
 
-    // Evitar duplicatas com base no id do restaurante
-    const seenIds = new Set();
+    // Usar um Set para evitar duplicatas
+    const displayedRestaurantIds = new Set();
+
     data.restaurants.forEach(restaurant => {
-      if (!restaurant.id || !restaurant.restaurant_name || seenIds.has(restaurant.id)) {
-        return; // Ignora restaurantes com dados inválidos ou duplicados
+      // Ignorar se o restaurante já foi exibido
+      if (displayedRestaurantIds.has(restaurant.id)) {
+        return;
       }
-      seenIds.add(restaurant.id);
-      const li = document.createElement('li');
-      const roundedRating = Math.round(restaurant.average_rating || 0);
-      const stars = '★'.repeat(roundedRating) + '☆'.repeat(5 - roundedRating);
-      const reviewCountText = restaurant.review_count === 1 ? '1 avaliação' : `${restaurant.review_count || 0} avaliações`;
-      const favoriteClass = favorites.has(restaurant.id) ? 'heart-icon favorite' : 'heart-icon';
-      li.innerHTML = `
-        <div class="restaurant-card">
-          <div class="restaurant-info">
-            <a href="/Cliente/review.html?id=${restaurant.id}" class="restaurant-name">
-              ${restaurant.restaurant_name}
-            </a>
-            <span class="restaurant-rating">${stars} (${restaurant.average_rating ? restaurant.average_rating.toFixed(1) : '0.0'}, ${reviewCountText})</span>
-            <span class="${favoriteClass}" onclick="toggleFavorite(${restaurant.id}, this)"></span>
-          </div>
+      displayedRestaurantIds.add(restaurant.id);
+
+      const restaurantCard = document.createElement('div');
+      restaurantCard.classList.add('restaurant-card');
+      restaurantCard.innerHTML = `
+        <div class="restaurant-info">
+          <div class="restaurant-name">${restaurant.restaurant_name}</div>
+          <div class="restaurant-rating">⭐ ${parseFloat(restaurant.average_rating).toFixed(1)} (${restaurant.review_count} avaliações)</div>
         </div>
+        <span class="heart-icon ${favorites.has(restaurant.id) ? 'favorite' : ''}" data-id="${restaurant.id}"></span>
       `;
-      restaurantList.appendChild(li);
+
+      // Adicionar evento de clique para redirecionar ao clicar no card
+      restaurantCard.addEventListener('click', (e) => {
+        if (e.target.classList.contains('heart-icon')) return;
+        window.location.href = `/Cliente/review.html?id=${restaurant.id}`;
+      });
+
+      // Adicionar evento de clique no coração
+      const heartIcon = restaurantCard.querySelector('.heart-icon');
+      heartIcon.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const restaurantId = heartIcon.getAttribute('data-id');
+        const isFavorite = heartIcon.classList.contains('favorite');
+
+        try {
+          const action = isFavorite ? 'remove' : 'add';
+          const favResponse = await fetch('/api/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ restaurantId, action }),
+            credentials: 'include'
+          });
+
+          const favData = await favResponse.json();
+          if (favResponse.ok) {
+            heartIcon.classList.toggle('favorite');
+            if (currentMode === 'favorites') {
+              loadRestaurants(); // Recarregar para atualizar a lista de favoritos
+            }
+          } else {
+            alert(favData.error || 'Erro ao atualizar favorito.');
+          }
+        } catch (error) {
+          console.error('Erro ao atualizar favorito:', error);
+          alert('Erro ao conectar ao servidor.');
+        }
+      });
+
+      restaurantList.appendChild(restaurantCard);
     });
   } catch (error) {
-    const restaurantList = document.getElementById('restaurant-list');
-    if (restaurantList) {
-      restaurantList.innerHTML = `<p class="no-results">${error.message || 'Erro ao carregar restaurantes.'}</p>`;
-    }
     console.error('Erro ao carregar restaurantes:', error);
-  }
-}
-
-async function toggleFavorite(restaurantId, element) {
-  try {
-    const response = await fetch('/api/favorites', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ restaurantId, action: element.classList.contains('favorite') ? 'remove' : 'add' }),
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Erro ao atualizar favorito.');
+    // Evita alertar o usuário se for apenas uma lista vazia
+    if (!error.message.includes("Unexpected token '<'")) {
+        alert('Erro ao carregar restaurantes.');
     }
-
-    element.classList.toggle('favorite');
-    await loadRestaurants();
-  } catch (error) {
-    console.error('Erro ao atualizar favorito:', error);
-    alert('Erro ao atualizar favorito: ' + error.message);
   }
 }
 
@@ -124,17 +135,17 @@ async function loadClientDashboard() {
   try {
     // Carregar informações do cliente logado
     const clientResponse = await fetch('/api/client-me', { credentials: 'include' });
+    const clientData = await clientResponse.json();
     if (!clientResponse.ok) {
       window.location.href = '/Cliente/login_client.html';
       return;
     }
-    const clientData = await clientResponse.json();
 
     // Preencher o nome do cliente no dropdown
     document.getElementById('client-name').textContent = clientData.nome;
 
     // Carregar restaurantes iniciais
-    await loadRestaurants();
+    loadRestaurants();
   } catch (error) {
     console.error('Erro ao carregar dashboard:', error);
     window.location.href = '/Cliente/login_client.html';
@@ -151,6 +162,12 @@ async function showFavorites() {
   currentSearchQuery = '';
   await loadRestaurants();
   updateDisplay();
+  toggleDropdown(); // Fechar dropdown após clicar
+}
+
+// Nova função para editar tags
+function editTags() {
+  window.location.href = '/Cliente/edit_tags.html'; // Redireciona para a página de edição de tags
   toggleDropdown(); // Fechar dropdown após clicar
 }
 
